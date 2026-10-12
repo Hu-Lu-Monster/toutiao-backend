@@ -1,0 +1,11 @@
+# 当前学习环境的直接依赖；bcrypt 固定为与 Passlib 兼容的版本。
+fastapi==0.143.0
+uvicorn==0.54.0
+SQLAlchemy==2.1.4
+aiomysql==0.3.2
+pydantic==2.14.0
+passlib==1.7.4
+bcrypt==4.3.0
+cryptography==50.0.2
+sympy==1.14.0
+python-dotenv==1.2.4
