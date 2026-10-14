@@ -3,7 +3,13 @@ from fastapi import APIRouter,Depends,HTTPException,status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from config.db_conf import get_db
-from schemas.users import UserRequest, UserAuthResponse, UserInfoResponse
+from schemas.users import (
+    UserRequest,
+    UserAuthResponse,
+    UserInfoResponse,
+    UserUpdateResponse,
+    UserChangePwdRequest
+)
 from crud import users
 from utils.response import success_response
 from utils.auth import get_current_user
@@ -41,3 +47,24 @@ async def login(login_data:UserRequest, db:AsyncSession = Depends(get_db)):
 @router.get("/info")
 async def get_user_info(user : User = Depends(get_current_user)):
     return success_response(msg="获取用户信息成功",data = UserInfoResponse.model_validate(user))
+
+#修改用户信息
+#验证token 更新用户信息 响应结果
+@router.put("/update")
+async def update_user_info(user_data: UserUpdateResponse,
+                           user: User = Depends(get_current_user),
+                           db: AsyncSession = Depends(get_db)):
+    user = await users.update_user_info(db,user.username,user_data)
+    return success_response(msg="修改用户信息成功",data = UserInfoResponse.model_validate(user))
+
+#修改用户密码
+#验证token 验证旧的密码 更新密码 加密 响应结果
+@router.put("/password")
+async def update_password(
+                               password_data : UserChangePwdRequest,
+                               user : User = Depends(get_current_user),
+                               db: AsyncSession = Depends(get_db)):
+    res_change_pwd = await users.update_password(db,user,password_data)
+    if not res_change_pwd:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,detail="修改密码失败，请稍后再试")
+    return  success_response(msg="修改密码成功")

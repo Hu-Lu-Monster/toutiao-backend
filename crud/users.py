@@ -1,9 +1,11 @@
+from fastapi import HTTPException
 from models.users import User, UserToken
-from sqlalchemy import select
+from sqlalchemy import select,update
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import security
 import uuid
 from datetime import datetime, timedelta
+from schemas.users import UserUpdateResponse,UserChangePwdRequest
 
 #根据用户名查询数据库
 async def get_user_by_username(db: AsyncSession,username: str):
@@ -59,3 +61,34 @@ async def get_user_by_token(db: AsyncSession,token: str):
     query = select(User).where(User.id == db_token.user_id)
     result = await db.execute(query)
     return result.scalar_one_or_none()
+
+#更改用户信息
+async def update_user_info(db: AsyncSession,username:str,user_data: UserUpdateResponse):
+    query = update(User).where(User.username == username).values(**user_data.model_dump(
+        exclude_unset=True,
+        exclude_none=True,        #有值的才更新到数据库 这样如果用户不设置值 不会更新为默认值
+    ))
+    result = await db.execute(query)
+    await db.commit()
+
+    #检查更新
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404,detail="用户不存在")
+
+    #获取更新后的用户
+    update_user = await get_user_by_username(db, username)
+    return update_user
+
+#更改密码
+async def update_password(db: AsyncSession,user:User,password_data : UserChangePwdRequest):
+    #验证旧密码
+    if not security.verify_password(password_data.oldPassword,user.password):
+        return False
+    #加密新密码
+    #注意这里 也可以直接给user.password赋值让他等于hashed_newPassword orm操作 然后提交的时候sqlalchemy会自动更新数据库变化
+    hashed_newPassword = security.get_hash_password(password_data.newPassword)
+    query = update(User).where(User.username == user.username).values(password = hashed_newPassword)
+    result = await db.execute(query)
+    await db.commit()
+    await db.refresh(user)
+    return True

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 #
 from fastapi.middleware.cors import CORSMiddleware
-from routers import news,users
+from routers import news, users, favorite,history
 from utils.exception_handlers import register_exception_handlers
 
 app = FastAPI()
@@ -32,3 +32,9 @@ app.add_middleware(
 
 #挂载路由
 app.include_router(users.router)
+
+#挂载收藏路由
+app.include_router(favorite.router)
+
+#挂载浏览历史路由
+app.include_router(history.router)

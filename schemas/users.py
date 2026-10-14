@@ -35,3 +35,16 @@ class UserAuthResponse(BaseModel):
         populate_by_name=True,#别名与字段名兼容
         from_attributes=True,#允许从orm对象中取值
     )
+
+#更新用户信息的模型类
+class UserUpdateResponse(BaseModel):
+    nickname: str = None
+    avatar: str = None
+    gender: str = None
+    bio: str = None
+    phone : str = None
+
+    #修改密码的模型类
+class UserChangePwdRequest(BaseModel):
+    oldPassword: str = Field(...,alias = "oldPassword",description = "旧密码")
+    newPassword: str = Field(...,min_length = 6, alias = "newPassword",description = "新密码")

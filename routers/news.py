@@ -3,7 +3,7 @@ from fastapi.params import Depends
 from sqlalchemy import Null
 from sympy import categories
 from sqlalchemy.ext.asyncio import AsyncSession
-from crud import news
+from crud import news, news_cache
 from config.db_conf import get_db
 #创建APIRouter实例
 #tags：分组标签
@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/news", tags=["news"])
 #获取新闻分类
 @router.get("/categories" )
 async def get_categories(db:AsyncSession = Depends(get_db),skip: int = 0, limit: int = 100):
-    categories = await news.get_categories(db,skip, limit)
+    categories = await news_cache.get_categories(db,skip, limit)
     return {
         "code": 200,
         "msg": "success",
@@ -35,7 +35,7 @@ async def get_news_list(
 ):
     #处理分页规则->查询新闻列表->计算总量->计算是否还有更多
     offset = (page-1) * page_size
-    news_list = await news.get_news_list(db,category_id,offset,page_size)
+    news_list = await news_cache.get_news_list(db,category_id,offset,page_size)
     total = await news.get_news_count(db,category_id)
     hasMore = (offset + len(news_list)) < total
     return {
