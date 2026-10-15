@@ -2,9 +2,9 @@ from fastapi.encoders import jsonable_encoder
 from torch._higher_order_ops import strict_mode
 from cache.news_cache import (
     get_cached_categories
-    ,set_cache_categories
-    ,get_cache_news_list
-    ,set_cache_news_list
+, set_cache_categories
+, get_cache_news_list
+, set_cache_news_list, get_cache_related_news, set_cache_related_news
 )
 from models.news import Category, News
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -68,6 +68,10 @@ async def add_news_views(db: AsyncSession,news_id: int):
     return result.rowcount > 0
 
 async def get_related_news(db: AsyncSession,category_id: int,news_id: int,limit: int = 5):
+    #先查询缓存
+    related_news = await get_cache_related_news(news_id,category_id,limit)
+    if related_news is not None:
+        return related_news
     #查询当前类型下除了本id外的其他新闻
     stmt = select(News).where(
     News.category_id == category_id,
@@ -78,8 +82,7 @@ async def get_related_news(db: AsyncSession,category_id: int,news_id: int,limit:
     result = await db.execute(stmt)
     #return result.scalars().all()
     related_news = result.scalars().all()
-    #列表推导式、推导出新闻的核心数据 再return
-    return [{
+    data = [{
         "id": news_detail.id,
         "title": news_detail.title,
         "content": news_detail.content,
@@ -89,3 +92,7 @@ async def get_related_news(db: AsyncSession,category_id: int,news_id: int,limit:
         "categoryId": news_detail.category_id,
         "views": news_detail.views  # 浏览量
     } for news_detail in related_news]
+    data = jsonable_encoder(data)
+    await set_cache_related_news(news_id,category_id,limit,data)
+    #列表推导式、推导出新闻的核心数据 再return
+    return data

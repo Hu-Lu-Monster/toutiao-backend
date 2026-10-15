@@ -1,7 +1,9 @@
 # FastAPI 头条项目后端
 
+项目源码：[Hu-Lu-Monster/toutiao-backend](https://github.com/Hu-Lu-Monster/toutiao-backend)
+
 跟随课程逐步开发的 Python 后端学习项目，使用 FastAPI、SQLAlchemy 异步 ORM、MySQL 和 Redis。
-目前包含新闻接口、用户注册与登录、用户信息与密码修改、收藏、浏览历史，以及新闻分类和列表缓存。
+目前包含新闻接口、用户注册与登录、用户信息与密码修改、收藏、浏览历史，以及新闻分类、分页列表和同分类相关新闻缓存。
 
 ## 本地运行
 
